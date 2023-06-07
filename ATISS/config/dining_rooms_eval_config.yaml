@@ -1,0 +1,50 @@
+data:
+    dataset_type: "cached_threedfront"
+    encoding_type: "cached_autoregressive_wocm_eval"
+    dataset_directory: "path_to_dataset_directory"
+    annotation_file: "../config/diningroom_threed_front_splits.csv"
+    path_to_invalid_scene_ids: "../config/invalid_threed_front_rooms.txt"
+    path_to_invalid_bbox_jids: "../config/black_list.txt"
+    filter_fn: "no_filtering"
+    train_stats: "dataset_stats.txt"
+    room_layout_size: "64,64"
+
+network:
+    type: "autoregressive_transformer"
+    n_layers: 4
+    n_heads: 8
+    query_dimensions: 64
+    value_dimensions: 64
+    feed_forward_dimensions: 1024
+    hidden2output_layer: "autoregressive_mlc"
+    hidden_dims: 512
+    with_extra_fc: false
+    bbox_output: "autoregressive_mlc"
+    n_mixtures: 10
+    use_room_mask_as_features: true
+
+feature_extractor:
+    name: "resnet18"
+    feature_size: 64
+    freeze_bn: true
+    input_channels: 1
+
+training:
+    splits: ["train", "val"]
+    epochs: 10000
+    steps_per_epoch: 500
+    batch_size: 128
+    save_frequency: 50
+    optimizer: Adam
+    lr: 0.0001
+    weight_decay: 0.0
+
+validation:
+    splits: ["test"]
+    frequency: 5
+    batch_size: 128
+
+logger:
+    type: "wandb"
+    project: "autoregressive_transformer"
+
