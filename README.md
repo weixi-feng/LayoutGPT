@@ -18,7 +18,7 @@
 
 ![Teaser figure](assets/teaser.jpg)
 
-# Installation & Dependencies
+## Installation & Dependencies
 LayoutGPT and the downstream generation requires different libraries. You can install everything all at once
 ```
 conda env create -f environment.yml
@@ -45,8 +45,9 @@ pip install -e .
 You can also refer to the official repo of [GLIGEN](https://github.com/gligen/GLIGEN/tree/master), [GLIP](https://github.com/microsoft/GLIP) and [ATISS](https://github.com/nv-tlabs/ATISS/tree/master) for detailed guidance. 
 For GLIGEN, download the [Box+Text](https://github.com/gligen/GLIGEN/tree/master#download-gligen-models) checkpoint and put it under ```gligen/gligen_checkpoints```. For GLIP, download the [backbone](https://github.com/microsoft/GLIP#installation-and-setup) and [GLIP-L](https://github.com/microsoft/GLIP#model-zoo) and put them under ```eval_models/GLIP/MODEL```.
 
-# Data Preparation
-Our image layout benchmark NSR-1K and the 3D scene data split is provided under ```./dataset```. NSR-1K contains ground truth image layouts for each prompt extracted from the MSCOCO dataset. 
+## Data Preparation
+Our image layout benchmark NSR-1K and the 3D scene data split is provided under ```./dataset```. NSR-1K contains ground truth image layouts for each prompt extracted from the MSCOCO dataset. Download the [visual features](https://drive.google.com/file/d/11ypmlZW9CAepdkgDHfuVlCqbXGut0XsP/view?usp=sharing) of the train split for counting prompts and put it under ```./dataset/NSR-1K/counting/```
+
 
 For indoor scene synthesis, you need to additionally prepare the [3D-FRONT](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-scene-dataset) and [3D-FUTURE](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-future) datasets. You can directly refer to [ATISS](https://github.com/nv-tlabs/ATISS/tree/master#dataset) or follow the steps below:
 
@@ -66,7 +67,7 @@ python pickle_threed_future_dataset.py path_to_pickle_output_dir path_to_3d_fron
 
 The generated dataset for each room type is different from ATISS due to a major update of the 3D-FRONT dataset. We find it impossible to reproduce the original data statistics due to different category annotations in the updated version (e.g. numerous objects being labeled as "unknown"). To include as many scenes as possible, we update ```./ATISS/scene_synthesis/datasets/base.py``` and end up with 4530 bedrooms and 987 livingrooms.
 
-# 2D Image Layout Generation
+## 2D Image Layout Generation
 We provide the script to generate layouts for NSR-1K benchmark. First set up your openai authentication in the script. Then run
 ```
 python run_layoutgpt_2d.py --icl_type k-similar --K 8 --setting counting --gpt_type gpt4 --n_iter 5
@@ -78,7 +79,7 @@ python gligen_layout_counting.py --file ../llm_output/counting/gpt4.counting.k-s
 ```
 Note that the script will save a clean image and an image with bounding boxes for each prompt into two separate folders. In our experiment in the preprint, we generate 5 different layouts for each prompt to reduce variance. 
 
-## Layout & Image Evaluation
+### Layout & Image Evaluation
 To evaluate the raw layouts, run
 ```
 # for numerical prompts
@@ -91,7 +92,7 @@ python eval_counting.py --dir path_to_generated_clean_images
 ```
 
 
-# 3D Indoor Scene Synthesis
+## 3D Indoor Scene Synthesis
 First set up your openai authentication in the script, then run the script to generate scenes
 ```
 python run_layoutgpt_3d.py --dataset_dir path_to_output_dir --icl_type k-similar --K 8 --room bedroom --gpt_type gpt4 --unit px --normalize --regular_floor_plan
@@ -100,7 +101,7 @@ To evaluate the out-of-bound rate and KL divergence of the generated layouts, ru
 ```
 python eval_scene_layout.py --dataset_dir path_to_output_dir --file ./llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --room bedroom
 ```
-## Visualization
+### Visualization
 Following ATISS, you can visualize the generated layout by rendering the scene images using [simple-3dviz](https://simple-3dviz.com/)
 ```
 cd ATISS/scripts
@@ -109,7 +110,7 @@ python render_from_file.py ../config/bedrooms_eval_config.yaml visuslization_out
 To render just the image of particular scene(s), add ```--scene_id id1 id2```. For all visualization shown in the preprint, we use [Blender](https://www.blender.org/) to manually render the scene images. With ```--export_scene```, you can find a folder under ```visuslization_output_dir```  for each scene, which contains many ```*.obj``` and ```*.mtl``` files. You can import these files into Blender and render the scenes. While this should be doable with Python, we do not have a script to achieve it yet.  
 
 
-# Citations
+## Citation
 Please consider citing our work if you find it relevant or helpful:
 ```
 @article{feng2023layoutgpt,
@@ -120,5 +121,5 @@ Please consider citing our work if you find it relevant or helpful:
 }
 ```
 
-# Disclaimer
+## Disclaimer
 We thank the authors of [GLIGEN](https://github.com/gligen/GLIGEN/tree/master), [GLIP](https://github.com/microsoft/GLIP) and [ATISS](https://github.com/nv-tlabs/ATISS/tree/master) for making their code available. It is important to note that the code present here is not the official or original code of the respective individual or organization who initially created it. Part of the code may be subject to retraction upon official requests. Any use of downstream generation code should be governed by the official terms and conditions set by the original authors or organizations. It is your responsibility to comply with these terms and conditions and ensure that your usage adheres to the appropriate guidelines.
