@@ -11,10 +11,12 @@
 [Xin Eric Wang](https://eric-xw.github.io/)<sup>2</sup>,
 [William Yang Wang](https://sites.cs.ucsb.edu/~william/) <sup>1</sup>
 <br>
-<sup>1</sup>UCSB, <sup>2</sup>UCSC, <sup>3</sup>Google
+<sup>1</sup>UC Santa Barbara, <sup>2</sup>UC Santa Cruz, <sup>3</sup>Google
+<br>
+<sup>*</sup>Equal Contribution
 <br>
 
-### [Project Page](https://layoutgpt.github.io/) | [arxiv](https://arxiv.org/abs/2305.15393)
+[Project Page](https://layoutgpt.github.io/) | [arxiv](https://arxiv.org/abs/2305.15393)
 
 ![Teaser figure](assets/teaser.jpg)
 
