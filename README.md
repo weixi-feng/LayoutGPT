@@ -1,15 +1,15 @@
 # LayoutGPT: Compositional Visual Planning and Generation with Large Language Models
 
 
-[Weixi Feng](https://weixi-feng.github.io/) <sup>1*</sup>,
-[Wanrong Zhu](https://wanrong-zhu.com/) <sup>1*</sup>,
+[Weixi Feng](https://weixi-feng.github.io/)<sup>1*</sup>,
+[Wanrong Zhu](https://wanrong-zhu.com/)<sup>1*</sup>,
 [Tsu-Jui Fu](https://tsujuifu.github.io/)<sup>1</sup>,
 [Varun Jampani](https://varunjampani.github.io/)<sup>3</sup>,
 [Arjun Akula](https://www.arjunakula.com/)<sup>3</sup>,
-[Xuehai He](https://scholar.google.com/citations?user=kDzxOzUAAAAJ&) <sup>2</sup>,
+[Xuehai He](https://scholar.google.com/citations?user=kDzxOzUAAAAJ&)<sup>2</sup>,
 [Sugato Basu](https://sites.google.com/site/sugatobasu/)<sup>3</sup>,
 [Xin Eric Wang](https://eric-xw.github.io/)<sup>2</sup>,
-[William Yang Wang](https://sites.cs.ucsb.edu/~william/) <sup>1</sup>
+[William Yang Wang](https://sites.cs.ucsb.edu/~william/)<sup>1</sup>
 <br>
 <sup>1</sup>UC Santa Barbara, <sup>2</sup>UC Santa Cruz, <sup>3</sup>Google
 <br>
