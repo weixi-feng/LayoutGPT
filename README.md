@@ -20,6 +20,13 @@
 
 ![Teaser figure](assets/teaser.jpg)
 
+<p style="text-align: center;">
+    <img width="240" alt="Example 1" src="assets/28445.gif"/>
+    <img width="240" alt="Example 2" src="assets/10043.gif"/>
+    <img width="240" alt="Example 3" src="assets/2050.gif"/>
+    <img width="240" alt="Example 3" src="assets/326.gif"/>
+</p>
+
 ## Installation & Dependencies
 LayoutGPT and the downstream generation requires different libraries. You can install everything all at once
 ```
