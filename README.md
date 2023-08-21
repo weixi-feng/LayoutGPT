@@ -24,7 +24,7 @@
     <img width="240" alt="Example 1" src="assets/28445.gif"/>
     <img width="240" alt="Example 2" src="assets/10043.gif"/>
     <img width="240" alt="Example 3" src="assets/2050.gif"/>
-    <img width="240" alt="Example 3" src="assets/326.gif"/>
+    <!-- <img width="240" alt="Example 4" src="assets/326.gif"/> -->
 </p>
 
 ## Installation & Dependencies
@@ -114,7 +114,7 @@ python eval_scene_layout.py --dataset_dir path_to_output_dir --file ./llm_output
 Following ATISS, you can visualize the generated layout by rendering the scene images using [simple-3dviz](https://simple-3dviz.com/)
 ```
 cd ATISS/scripts
-python render_from_file.py ../config/bedrooms_eval_config.yaml visuslization_output_dir path_to_pickle_output_dir ../demo/floor_plan_texture_images ../../llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --up_vector 0,1,0 --camera_position 2,2,2 --split test_regular --export_scene
+python render_from_files.py ../config/bedrooms_eval_config.yaml visuslization_output_dir path_to_pickle_output_dir ../demo/floor_plan_texture_images ../../llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --up_vector 0,1,0 --camera_position 2,2,2 --split test_regular --export_scene
 ```
 To render just the image of particular scene(s), add ```--scene_id id1 id2```. For all visualization shown in the preprint, we use [Blender](https://www.blender.org/) to manually render the scene images. With ```--export_scene```, you can find a folder under ```visuslization_output_dir```  for each scene, which contains many ```*.obj``` and ```*.mtl``` files. You can import these files into Blender and render the scenes. While this should be doable with Python, we do not have a script to achieve it yet.  
 
