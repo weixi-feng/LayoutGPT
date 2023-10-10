@@ -1,4 +1,4 @@
-# LayoutGPT: Compositional Visual Planning and Generation with Large Language Models
+# [NeurIPS 2023] LayoutGPT: Compositional Visual Planning and Generation with Large Language Models
 
 
 [Weixi Feng](https://weixi-feng.github.io/)<sup>1*</sup>,
@@ -27,38 +27,49 @@
     <!-- <img width="240" alt="Example 4" src="assets/326.gif"/> -->
 </p>
 
+## Updates
+
+2023.10.10 We released our preprocessed 3D-FRONT and 3D-FUTURE data (see below). Updated installation and preparation guidance. 
+
+2023.09.22 LayoutGPT is accepted to NeurIPS 2023!
+
+
 ## Installation & Dependencies
 LayoutGPT and the downstream generation requires different libraries. You can install everything all at once
 ```
 conda env create -f environment.yml
 ```
-or first install Pytorch>=1.12 and then install necessary packages depending on your use case
+and additionally
 ```
-# for LayoutGPT
-pip install openai cssutils numpy tqdm pillow git+https://github.com/openai/CLIP.git transformers
+# for GLIGEN
+wget https://huggingface.co/gligen/gligen-generation-text-box/resolve/main/diffusion_pytorch_model.bin -O gligen/gligen_checkpoints/checkpoint_generation_text.pth
 
-# for image generation
-pip install albumentations opencv-python pudb imageio imageio-ffmpeg pytorch-lightning omegaconf test-tube streamlit einops torch-fidelity  protobuf torchmetrics kornia
-
-# for image evaluation
-pip install einops shapely timm yacs tensorboardX ftfy prettytable pymongo
+# for image evaluation using GLIP
 cd eval_models/GLIP
 python setup.py build develop --user
+wget https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_large_patch4_window12_384_22k.pth -O MODEL/swin_large_patch4_window12_384_22k.pth
+wget https://huggingface.co/GLIPModel/GLIP/blob/main/glip_large_model.pth -O MODEL/glip_large_model.pth
 
 # for scene synthesis
-pip install cython networkx pyrr pyyaml scipy trimesh matplotlib wxpython simple_3dviz==0.4.0
 cd ATISS
 python setup.py build_ext --inplace
 pip install -e .
 ```
-You can also refer to the official repo of [GLIGEN](https://github.com/gligen/GLIGEN/tree/master), [GLIP](https://github.com/microsoft/GLIP) and [ATISS](https://github.com/nv-tlabs/ATISS/tree/master) for detailed guidance. 
-For GLIGEN, download the [Box+Text](https://github.com/gligen/GLIGEN/tree/master#download-gligen-models) checkpoint and put it under ```gligen/gligen_checkpoints```. For GLIP, download the [backbone](https://github.com/microsoft/GLIP#installation-and-setup) and [GLIP-L](https://github.com/microsoft/GLIP#model-zoo) and put them under ```eval_models/GLIP/MODEL```.
+You can also refer to the official repo of [GLIGEN](https://github.com/gligen/GLIGEN/tree/master), [GLIP](https://github.com/microsoft/GLIP) and [ATISS](https://github.com/nv-tlabs/ATISS/tree/master) for detailed guidance.
 
 ## Data Preparation
+
+### 2D image layouts
 Our image layout benchmark NSR-1K and the 3D scene data split is provided under ```./dataset```. NSR-1K contains ground truth image layouts for each prompt extracted from the MSCOCO dataset. Download the [visual features](https://drive.google.com/file/d/11ypmlZW9CAepdkgDHfuVlCqbXGut0XsP/view?usp=sharing) of the train split for counting prompts and put it under ```./dataset/NSR-1K/counting/```
 
+### 3D scene layouts
+For indoor scene synthesis, we are able to provide our [preprocessed dataset](https://drive.google.com/file/d/1NV3pmRpWcehPO5iKJPmShsRp_lNbxJuK/view?usp=sharing) after checking the licenses of [3D-FRONT](https://tianchi.aliyun.com/dataset/65347) and [3D-FUTURE](https://tianchi.aliyun.com/dataset/98063). Unzip the downloaded file to ```./ATISS/``` and you should have ```./ATISS/data_output``` and ```./ATISS/data_output_future```.
 
-For indoor scene synthesis, you need to additionally prepare the [3D-FRONT](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-scene-dataset) and [3D-FUTURE](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-future) datasets. You can directly refer to [ATISS](https://github.com/nv-tlabs/ATISS/tree/master#dataset) or follow the steps below:
+<!-- you need to additionally prepare the [3D-FRONT](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-scene-dataset) and [3D-FUTURE](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-future) datasets.  -->
+
+You can also refer to [ATISS](https://github.com/nv-tlabs/ATISS/tree/master#dataset) if you prefer to go through the preprocessing steps on your own.
+
+<!-- or follow the steps below:
 
 1. Download and unzip 3D-FRONT.zip and 3D-FUTURE-model.zip
 2. Preprocess the scenes to generate ground truth views
@@ -72,9 +83,9 @@ Note that for FID evaluation, we render scene images from four different camera 
 3. pickle the furniture data for visualization
 ```
 python pickle_threed_future_dataset.py path_to_pickle_output_dir path_to_3d_front_dataset_dir path_to_3d_future_dataset_dir path_to_3d_future_model_info --dataset_filtering threed_front_bedroom
-```
+``` -->
 
-The generated dataset for each room type is different from ATISS due to a major update of the 3D-FRONT dataset. We find it impossible to reproduce the original data statistics due to different category annotations in the updated version (e.g. numerous objects being labeled as "unknown"). To include as many scenes as possible, we update ```./ATISS/scene_synthesis/datasets/base.py``` and end up with 4530 bedrooms and 987 livingrooms.
+
 
 ## 2D Image Layout Generation
 We provide the script to generate layouts for NSR-1K benchmark. First set up your openai authentication in the script. Then run
@@ -104,19 +115,19 @@ python eval_counting.py --dir path_to_generated_clean_images
 ## 3D Indoor Scene Synthesis
 First set up your openai authentication in the script, then run the script to generate scenes
 ```
-python run_layoutgpt_3d.py --dataset_dir path_to_output_dir --icl_type k-similar --K 8 --room bedroom --gpt_type gpt4 --unit px --normalize --regular_floor_plan
+python run_layoutgpt_3d.py --dataset_dir ./ATISS/data_output --icl_type k-similar --K 8 --room bedroom --gpt_type gpt4 --unit px --normalize --regular_floor_plan
 ```
-To evaluate the out-of-bound rate and KL divergence of the generated layouts, run
+To evaluate the out-of-bound rate (OOB) and KL divergence (KL-div.) of the generated layouts, run
 ```
-python eval_scene_layout.py --dataset_dir path_to_output_dir --file ./llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --room bedroom
+python eval_scene_layout.py --dataset_dir ./ATISS/data_output --file ./llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --room bedroom
 ```
 ### Visualization
 Following ATISS, you can visualize the generated layout by rendering the scene images using [simple-3dviz](https://simple-3dviz.com/)
 ```
 cd ATISS/scripts
-python render_from_files.py ../config/bedrooms_eval_config.yaml visuslization_output_dir path_to_pickle_output_dir ../demo/floor_plan_texture_images ../../llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --up_vector 0,1,0 --camera_position 2,2,2 --split test_regular --export_scene
+python render_from_files.py ../config/bedrooms_eval_config.yaml visuslization_output_dir ../data_output_future ../demo/floor_plan_texture_images ../../llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --up_vector 0,1,0 --camera_position 2,2,2 --split test_regular --export_scene
 ```
-To render just the image of particular scene(s), add ```--scene_id id1 id2```. For all visualization shown in the preprint, we use [Blender](https://www.blender.org/) to manually render the scene images. With ```--export_scene```, you can find a folder under ```visuslization_output_dir```  for each scene, which contains many ```*.obj``` and ```*.mtl``` files. You can import these files into Blender and render the scenes. While this should be doable with Python, we do not have a script to achieve it yet.  
+To render just the image of particular scene(s), add ```--scene_id id1 id2```. For all visualization shown in the preprint, we use [Blender](https://www.blender.org/) to manually render the scene images. With ```--export_scene```, you can find a folder under ```visuslization_output_dir```  for each scene, which contains ```*.obj``` and ```*.mtl``` files. You can import these files into Blender and render the scenes. While this can be done with Python, we do not have a script to achieve it yet.  
 
 
 ## Citation
