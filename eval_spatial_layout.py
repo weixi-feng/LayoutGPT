@@ -17,7 +17,7 @@ if __name__ == '__main__':
     ref_file = load_json("dataset/NSR-1K/spatial/spatial.val.json")
     ref_file = {x['id']: x for x in ref_file}
 
-    fname = args.files
+    fname = args.file
     basename = os.path.basename(fname)
     dirname = os.path.dirname(fname)
 
