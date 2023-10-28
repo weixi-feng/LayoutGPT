@@ -28,6 +28,7 @@
 </p>
 
 ## Updates
+2023.10.28 Now support Llama-2; camera ready version updated
 
 2023.10.10 We released our preprocessed 3D-FRONT and 3D-FUTURE data (see below). Updated installation and preparation guidance. 
 
@@ -58,9 +59,10 @@ pip install -e .
 You can also refer to the official repo of [GLIGEN](https://github.com/gligen/GLIGEN/tree/master), [GLIP](https://github.com/microsoft/GLIP) and [ATISS](https://github.com/nv-tlabs/ATISS/tree/master) for detailed guidance.
 
 ## Data Preparation
+Our image layout benchmark NSR-1K and the 3D scene data split is provided under ```./dataset```. 
 
 ### 2D image layouts
-Our image layout benchmark NSR-1K and the 3D scene data split is provided under ```./dataset```. NSR-1K contains ground truth image layouts for each prompt extracted from the MSCOCO dataset. Download the [visual features](https://drive.google.com/file/d/11ypmlZW9CAepdkgDHfuVlCqbXGut0XsP/view?usp=sharing) of the train split for counting prompts and put it under ```./dataset/NSR-1K/counting/```
+NSR-1K contains ground truth image layouts for each prompt extracted from the MSCOCO dataset. The extracted clip image features are provided under  ```./dataset/NSR-1K/```. The json files contain ground truth layouts, captions and other metadata.
 
 ### 3D scene layouts
 For indoor scene synthesis, we are able to provide our [preprocessed dataset](https://drive.google.com/file/d/1NV3pmRpWcehPO5iKJPmShsRp_lNbxJuK/view?usp=sharing) after checking the licenses of [3D-FRONT](https://tianchi.aliyun.com/dataset/65347) and [3D-FUTURE](https://tianchi.aliyun.com/dataset/98063). Unzip the downloaded file to ```./ATISS/``` and you should have ```./ATISS/data_output``` and ```./ATISS/data_output_future```.
@@ -90,7 +92,7 @@ python pickle_threed_future_dataset.py path_to_pickle_output_dir path_to_3d_fron
 ## 2D Image Layout Generation
 We provide the script to generate layouts for NSR-1K benchmark. First set up your openai authentication in the script. Then run
 ```
-python run_layoutgpt_2d.py --icl_type k-similar --K 8 --setting counting --gpt_type gpt4 --n_iter 5
+python run_layoutgpt_2d.py --icl_type k-similar --K 8 --setting counting --llm_type gpt4 --n_iter 5
 ```
 The generated layout will be saved to ```./llm_output/counting``` by default. To generate images based on the layouts, run
 ```
@@ -115,7 +117,7 @@ python eval_counting.py --dir path_to_generated_clean_images
 ## 3D Indoor Scene Synthesis
 First set up your openai authentication in the script, then run the script to generate scenes
 ```
-python run_layoutgpt_3d.py --dataset_dir ./ATISS/data_output --icl_type k-similar --K 8 --room bedroom --gpt_type gpt4 --unit px --normalize --regular_floor_plan
+python run_layoutgpt_3d.py --dataset_dir ./ATISS/data_output --icl_type k-similar --K 8 --room bedroom --llm_type gpt4 --unit px --normalize --regular_floor_plan
 ```
 To evaluate the out-of-bound rate (OOB) and KL divergence (KL-div.) of the generated layouts, run
 ```
