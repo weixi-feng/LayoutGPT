@@ -30,7 +30,7 @@
 ## Updates
 2023.10.28 Now support Llama-2; camera ready version updated
 
-2023.10.10 We released our preprocessed 3D-FRONT and 3D-FUTURE data (see below). Updated installation and preparation guidance. 
+2023.10.10 We released our preprocessed 3D-FRONT and 3D-FUTURE data (see [below](https://github.com/weixi-feng/LayoutGPT/tree/master#3d-scene-layouts)). Simplified the installation and preparation process. 
 
 2023.09.22 LayoutGPT is accepted to NeurIPS 2023!
 
@@ -56,7 +56,7 @@ cd ATISS
 python setup.py build_ext --inplace
 pip install -e .
 ```
-You can also refer to the official repo of [GLIGEN](https://github.com/gligen/GLIGEN/tree/master), [GLIP](https://github.com/microsoft/GLIP) and [ATISS](https://github.com/nv-tlabs/ATISS/tree/master) for detailed guidance.
+You may also refer to the official repo of [GLIGEN](https://github.com/gligen/GLIGEN/tree/master), [GLIP](https://github.com/microsoft/GLIP) and [ATISS](https://github.com/nv-tlabs/ATISS/tree/master) for detailed guidance.
 
 ## Data Preparation
 Our image layout benchmark NSR-1K and the 3D scene data split is provided under ```./dataset```. 
@@ -69,7 +69,7 @@ For indoor scene synthesis, we are able to provide our [preprocessed dataset](ht
 
 <!-- you need to additionally prepare the [3D-FRONT](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-scene-dataset) and [3D-FUTURE](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-future) datasets.  -->
 
-You can also refer to [ATISS](https://github.com/nv-tlabs/ATISS/tree/master#dataset) if you prefer to go through the preprocessing steps on your own.
+You may also refer to [ATISS](https://github.com/nv-tlabs/ATISS/tree/master#dataset) if you prefer to go through the preprocessing steps on your own.
 
 <!-- or follow the steps below:
 
