@@ -10,17 +10,18 @@ import time
 import random
 import argparse
 import openai
-from transformers import GPT2TokenizerFast
+from transformers import GPT2TokenizerFast, LlamaForCausalLM, LlamaTokenizer
+import transformers
 from utils import *
-
-from parse_llm_output import parse_layout
 
 openai.organization = ""
 openai.api_key = ""
-tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
 # GPT-3 Type
-gpt_name = {
+llm_name2id = {
+    'llama-7b': 'meta-llama/Llama-2-7b-hf',
+    'llama-13b': 'meta-llama/Llama-2-13b-hf',
+    'llama-70b': 'meta-llama/Llama-2-70b-hf',
     'gpt3.5': 'text-davinci-003',
     'gpt3.5-chat': 'gpt-3.5-turbo',
     'gpt4': 'gpt-4',
@@ -31,12 +32,12 @@ parser.add_argument('--input_info_dir', type=str, default='./dataset/NSR-1K')
 parser.add_argument('--base_output_dir', type=str, default='./llm_output')
 parser.add_argument('--setting', type=str, default='counting', choices=['counting', 'spatial'])
 parser.add_argument('--matching_content_type', type=str, default='visual')
-parser.add_argument('--gpt_type', type=str, default='gpt4', choices=list(gpt_name.keys()))
+parser.add_argument('--llm_type', type=str, default='gpt4', choices=list(llm_name2id.keys()))
 parser.add_argument('--icl_type', type=str, default='k-similar', choices=['fixed-random', 'k-similar'])
 parser.add_argument('--K', type=int, default=8)
 parser.add_argument('--gpt_input_length_limit', type=int, default=3000)
-parser.add_argument('--canvas_size', type=int, default=64)
-parser.add_argument("--n_iter", type=int, default=5)
+parser.add_argument('--canvas_size', type=int, default=256)
+parser.add_argument("--n_iter", type=int, default=1)
 parser.add_argument("--test", action='store_true')
 parser.add_argument('--verbose', default=False, action='store_true')
 args = parser.parse_args()
@@ -76,7 +77,7 @@ def create_exemplar_prompt(caption, object_list, canvas_size, is_chat=False):
     return prompt
 
 
-def form_prompt_for_chatgpt(text_input, top_k, supporting_examples=None, features=None):
+def form_prompt_for_chatgpt(text_input, top_k, tokenizer, supporting_examples=None, features=None):
     message_list = []
     system_prompt = 'Instruction: Given a sentence prompt that will be used to generate an image, plan the layout of the image.' \
                 'The generated layout should follow the CSS style, where each line starts with the object description ' \
@@ -133,7 +134,7 @@ def form_prompt_for_chatgpt(text_input, top_k, supporting_examples=None, feature
     return message_list
 
 
-def form_prompt_for_gpt3(text_input, top_k, supporting_examples=None, features=None):
+def form_prompt_for_gpt3(text_input, top_k, tokenizer, supporting_examples=None, features=None):
     rtn_prompt = 'Instruction: Given a sentence prompt that will be used to generate an image, plan the layout of the image.' \
                 'The generated layout should follow the CSS style, where each line starts with the object description ' \
                 'and is followed by its absolute position. ' \
@@ -182,12 +183,65 @@ def form_prompt_for_gpt3(text_input, top_k, supporting_examples=None, features=N
     return rtn_prompt
 
 
+class StoppingCriteriaICL(transformers.StoppingCriteria):
+    def __init__(self, stops=[],) -> None:
+        super().__init__()
+        self.stops = [s.to('cuda') for s in stops]
+    
+    def __call__(self, input_ids, scores, **kwargs):
+        for stop in self.stops:
+            if torch.all(stop == input_ids[0][-len(stop):]):
+                return True
+        return False
+
+
+def llama_generation(prompt_for_llama, model, args, eos_token_id=2, stop_criteria=None):
+    # can't make stopping criteria apply to each sample
+    # can't do sampling using logits processor
+    responses = []
+    for _ in range(args.n_iter):
+        responses += model(
+                    prompt_for_llama,
+                    do_sample=True,
+                    num_return_sequences=1,
+                    eos_token_id=eos_token_id,
+                    temperature=0.7,
+                )
+    response_text = [r['generated_text'] for r in responses]
+
+    return response_text, responses
+
+
+def gpt_generation(prompt_for_gpt, f_gpt_create, args, **kwargs):
+    input_kwargs = {
+        "model": args.llm_id,
+        "temperature": 0.7,
+        "max_tokens": 256,
+        "top_p": 1.0,
+        "frequency_penalty": 0.0,
+        "presence_penalty": 0.0,
+        "stop": "Prompt:",
+        "n": args.n_iter,
+    }
+    if args.llm_type == 'gpt3.5':
+        input_kwargs["prompt"] = prompt_for_gpt
+    else:
+        input_kwargs["messages"] = prompt_for_gpt
+    response = f_gpt_create(**input_kwargs)
+
+    if args.llm_type == 'gpt3.5':
+        response_text = [r["text"] for r in response.choices]
+    else:
+        response_text = [r["message"]["content"] for r in response.choices]
+
+    return response_text, response
+
 
 def _main(args):
     # check if have been processed
     args.output_dir = os.path.join(args.base_output_dir, args.setting)
     os.makedirs(args.output_dir, exist_ok=True)
-    output_filename = os.path.join(args.output_dir, f'{args.gpt_type}.{args.setting}.{args.icl_type}.k_{args.K}.px_{args.canvas_size}.json')
+    output_filename = os.path.join(args.output_dir, f'{args.llm_type}.{args.setting}.{args.icl_type}.k_{args.K}.px_{args.canvas_size}.json')
     if os.path.exists(output_filename):
         print(f'{output_filename} have been processed.')
         return
@@ -216,43 +270,58 @@ def _main(args):
         supporting_examples = train_examples
         features = load_features(args.matching_content_type)
 
-    # GPT-3 prediction process
-    args.gpt_name = gpt_name[args.gpt_type]
+    # GPT/LLAMA prediction process
+    args.llm_id = llm_name2id[args.llm_type]
     all_prediction_list = []
     all_responses = []
-    f_form_prompt = form_prompt_for_gpt3 if args.gpt_type == 'gpt3.5' else form_prompt_for_chatgpt
-    f_gpt_create = openai.Completion.create if args.gpt_type == 'gpt3.5' else openai.ChatCompletion.create
+
+    if 'llama' in args.llm_type:
+        f_form_prompt = form_prompt_for_gpt3
+
+        tokenizer = LlamaTokenizer.from_pretrained(args.llm_id)
+        stop_ids = [tokenizer(w, return_tensors="pt", add_special_tokens=False).input_ids.squeeze()[1:] for w in ["\n\n"]] # tokenization issue
+        stop_criteria = transformers.StoppingCriteriaList([StoppingCriteriaICL(stop_ids)])
+
+        model = transformers.pipeline(
+            "text-generation",
+            model=args.llm_id,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            max_new_tokens=512,
+            return_full_text=False,
+            stopping_criteria=stop_criteria
+        )
+        f_llm_generation = llama_generation 
+    elif 'gpt' in args.llm_type:
+        tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
+
+        if args.llm_type == 'gpt3.5':
+            f_form_prompt = form_prompt_for_gpt3
+            model = openai.Completion.create
+        else:
+            f_form_prompt = form_prompt_for_chatgpt
+            model = openai.ChatCompletion.create
+
+        f_llm_generation = gpt_generation
+    else:
+        raise NotImplementedError
 
     for val_example in tqdm(val_example_list, total=len(val_example_list), desc='test'):
-        while True:
-            top_k = args.K
-            prompt_for_gpt = f_form_prompt(
-                text_input=val_example['prompt'],
-                top_k=top_k,
-                supporting_examples=supporting_examples,
-                features=features
-            )
-            if args.verbose:
-                print(prompt_for_gpt)
-                print('\n' + '-'*30)
-                pdb.set_trace()
+        top_k = args.K
+        prompt_for_gpt = f_form_prompt(
+            text_input=val_example['prompt'],
+            top_k=top_k,
+            tokenizer=tokenizer,
+            supporting_examples=supporting_examples,
+            features=features
+        )
+        if args.verbose:
+            print(prompt_for_gpt)
+            print('\n' + '-'*30)
 
+        while True:
             try:
-                input_kwargs = {
-                    "model": args.gpt_name,
-                    "temperature": 0.7,
-                    "max_tokens": 256,
-                    "top_p": 1.0,
-                    "frequency_penalty": 0.0,
-                    "presence_penalty": 0.0,
-                    "stop": "Prompt:",
-                    "n": args.n_iter,
-                }
-                if args.gpt_type == 'gpt3.5':
-                    input_kwargs["prompt"] = prompt_for_gpt
-                else:
-                    input_kwargs["messages"] = prompt_for_gpt
-                response = f_gpt_create(**input_kwargs)
+                response, raw_response = f_llm_generation(prompt_for_gpt, model, args, eos_token_id=tokenizer.eos_token_id)
                 break
             except openai.error.ServiceUnavailableError:
                 print('OpenAI ServiceUnavailableError.\tWill try again in 5 seconds.')
@@ -264,15 +333,30 @@ def _main(args):
                 print(e)
                 print('Input too long. Will shrink the prompting examples.')
                 top_k -= 1
+                prompt_for_gpt = f_form_prompt(
+                    text_input=val_example['prompt'],
+                    top_k=top_k,
+                    supporting_examples=supporting_examples,
+                    features=features
+                )
+            except RuntimeError as e:
+                if "out of memeory" in str(e):
+                    top_k -= 1
+                    prompt_for_gpt = f_form_prompt(
+                        text_input=val_example['prompt'],
+                        top_k=top_k,
+                        tokenizer=tokenizer,
+                        supporting_examples=supporting_examples,
+                        features=features
+                    )
+                else:
+                    raise e
 
         all_responses.append(response)
         for i_iter in range(args.n_iter):
             # parse output
             predicted_object_list = []
-            if args.gpt_type == 'gpt3.5':
-                line_list = response.choices[i_iter]["text"].split('\n')
-            else:
-                line_list = response.choices[i_iter]["message"]["content"].split('\n')
+            line_list = response[i_iter].split('\n')
                 
             for line in line_list:
                 if line == '':
@@ -295,7 +379,7 @@ def _main(args):
     # save output
     with open(output_filename, 'w') as fout:
         json.dump(all_prediction_list, fout, indent=4, sort_keys=True)
-    print(f'LayoutGPT ({args.gpt_type}) prediction results written to {output_filename}')
+    print(f'LayoutGPT ({args.llm_type}) prediction results written to {output_filename}')
 
 
 if __name__ == '__main__':
