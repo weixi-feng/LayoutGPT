@@ -53,15 +53,24 @@ if __name__ == '__main__':
     parser.add_argument("--output_dir", type=str, default="counting")
     args = parser.parse_args()
 
-    folder = args.output_dir
-    save_dir = os.path.join("outputs", folder, str(args.thresh))
-    os.makedirs(save_dir, exist_ok=True)
+    # get list of eval images
     image_names = sorted(os.listdir(args.dir))
 
+    # ground truth annotations
     with open(args.annotations, "r") as file:
         gt = json.load(file)
     gt = {d['id']:d for d in gt}
-    
+
+    # prepare dir for detection results
+    folder = args.output_dir
+    save_dir = os.path.join("outputs", folder, str(args.thresh))
+    os.makedirs(save_dir, exist_ok=True)
+    result_file = f"{os.path.dirname(save_dir)}/GLIP{args.thresh}_results.json"
+    result_exists = os.path.exists(result_file)
+    if result_exists:
+        detection_results = json.load(open(result_file))
+
+    # GLIP config
     config_file = "configs/pretrain/glip_Swin_L.yaml"
     weight_file = "MODEL/glip_large_model.pth"
 
@@ -79,50 +88,48 @@ if __name__ == '__main__':
         confidence_threshold=0.7,
         show_mask_heatmaps=False
     )
-
     plus = 1 if glip_demo.cfg.MODEL.RPN_ARCHITECTURE == "VLDYHEAD" else 0
 
     grounding_results = {}
-    blockPrint()
+    # blockPrint()
     n_correct = 0
-    gt_count = []
-    pred_count = []
+    n_instances = 0
 
     for file in tqdm(image_names):
-        image = load(os.path.join(args.dir, file))
         image_id, n_iter = [int(x) for x in os.path.splitext(file)[0].split("_")]
 
         num_objects = {obj:n for obj, n in gt[image_id]['num_object']}
+        n_instances += len(num_objects)
         caption = ", ".join(list(num_objects.keys()))
 
-        result, top_predictions = glip_demo.run_on_web_image(image, caption, args.thresh)
-        fig = plt.figure(figsize=(5,5))
-        plt.imshow(result[:, :, [2, 1, 0]])
-        plt.axis("off")
-        plt.tight_layout()
-        plt.savefig(f"{save_dir}/{file}")
-        plt.close()
+        if result_exists:
+            bbox_by_entities = detection_results[file]
+        else:
+            image = load(os.path.join(args.dir, file))
+            result, top_predictions = glip_demo.run_on_web_image(image, caption, args.thresh)
+            fig = plt.figure(figsize=(5,5))
+            plt.imshow(result[:, :, [2, 1, 0]])
+            plt.axis("off")
+            plt.tight_layout()
+            plt.savefig(f"{save_dir}/{file}")
+            plt.close()
 
-        scores = top_predictions.get_field("scores")
-        labels = top_predictions.get_field("labels")
-        bbox = top_predictions.bbox
-        entities = glip_demo.entities
-        
-        new_labels = []
-        for i in labels:
-            if i <= len(entities):
-                new_labels.append(entities[i-plus])
-            else:
-                new_labels.append("object")
+            scores = top_predictions.get_field("scores")
+            labels = top_predictions.get_field("labels")
+            bbox = top_predictions.bbox
+            entities = glip_demo.entities
+            
+            new_labels = []
+            for i in labels:
+                if i <= len(entities):
+                    new_labels.append(entities[i-plus])
+                else:
+                    new_labels.append("object")
 
-        bbox_by_entities = defaultdict(list)
-        for l, score, coord in zip(new_labels, scores, bbox):
-            bbox_by_entities[l.strip()].append((score.item(), coord.tolist()))
-        grounding_results[file] = bbox_by_entities
-
-        for obj in num_objects.keys():
-            gt_count.append(num_objects[obj])
-            pred_count.append(len(bbox_by_entities[obj]))
+            bbox_by_entities = defaultdict(list)
+            for l, score, coord in zip(new_labels, scores, bbox):
+                bbox_by_entities[l.strip()].append((score.item(), coord.tolist()))
+            grounding_results[file] = bbox_by_entities
         
         if gt[image_id]['sub-type'] == 'comparison':
             anchor_obj, anchor_cnt = gt[image_id]['num_object'][0]
@@ -134,11 +141,13 @@ if __name__ == '__main__':
                     if (len(bbox_by_entities[gt[image_id]['num_object'][1][0]]) - anchor_cnt) * (gt[image_id]['num_object'][1][1] - anchor_cnt) > 0:
                         n_correct += 1
         else:
-            if all([x==y for x,y in zip(gt_count, pred_count)]):
-                n_correct += 1
+            for obj in num_objects.keys():
+                if num_objects[obj] == len(bbox_by_entities[obj]):
+                    n_correct += 1
         
     enablePrint()
-    print("Counting Accuracy: {:.04f}".format(n_correct / len(gt)))
+    print("Counting Accuracy: {:.04f}".format(n_correct / n_instances))
     
-    with open(f"{os.path.dirname(save_dir)}/GLIP{args.thresh}_results.json", "w") as file:
-        json.dump(grounding_results, file, indent=4, separators=(",",":"), sort_keys=True)
+    if not result_exists:
+        with open(result_file, "w") as file:
+            json.dump(grounding_results, file, indent=4, separators=(",",":"), sort_keys=True)
