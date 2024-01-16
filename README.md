@@ -49,7 +49,7 @@ wget https://huggingface.co/gligen/gligen-generation-text-box/resolve/main/diffu
 cd eval_models/GLIP
 python setup.py build develop --user
 wget https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_large_patch4_window12_384_22k.pth -O MODEL/swin_large_patch4_window12_384_22k.pth
-wget https://huggingface.co/GLIPModel/GLIP/blob/main/glip_large_model.pth -O MODEL/glip_large_model.pth
+wget https://huggingface.co/GLIPModel/GLIP/resolve/main/glip_large_model.pth?download=true -O MODEL/glip_large_model.pth
 
 # for scene synthesis
 cd ATISS

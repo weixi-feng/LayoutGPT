@@ -160,9 +160,11 @@ cython_debug/
 #.idea/
 *._.DS_Store
 test.ipynb
+dev.ipynb
 dataset/NSR-1K/counting/*counting.mscoco*
 dataset/NSR-1K/counting/*counting.single*
 dataset/NSR-1K/counting/*counting.two*
 dataset/NSR-1K/counting/*counting.reasoning*
 src/
 *.pth
+gligen/generation_samples
