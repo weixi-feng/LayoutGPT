@@ -168,3 +168,4 @@ dataset/NSR-1K/counting/*counting.reasoning*
 src/
 *.pth
 gligen/generation_samples
+eval_models/GLIP/outputs
