@@ -232,7 +232,7 @@ def export_scene(output_directory, trimesh_meshes, names=None):
         )
 
         with open(os.path.join(output_directory, names[i]), "w") as f:
-            f.write(obj_out.replace("material0", mtl_names[i]))
+            f.write(obj_out.replace("material_0", mtl_names[i]).replace("material.mtl", mtl_names[i]+".mtl"))
 
         # No material and texture to rename
         if tex_out is None:

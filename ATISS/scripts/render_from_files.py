@@ -226,7 +226,7 @@ def main(argv):
         "--scene_id",
         nargs="+",
         default=None,
-        help="Particular scene to render"
+        help="Particular scene to render, e.g. Bedroom-803"
     )
     parser.add_argument(
         "--split",

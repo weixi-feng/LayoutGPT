@@ -1,7 +1,7 @@
 data:
     dataset_type: "cached_threedfront"
     encoding_type: "cached_autoregressive_wocm_eval"
-    dataset_directory: ""
+    dataset_directory: "../data_output/bedroom"
     annotation_file: "../config/bedroom_threed_front_splits_new.csv"
     path_to_invalid_scene_ids: "../config/invalid_threed_front_rooms.txt"
     path_to_invalid_bbox_jids: "../config/black_list.txt"
