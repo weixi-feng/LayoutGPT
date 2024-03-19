@@ -28,6 +28,8 @@
 </p>
 
 ## Updates
+2024.03.18 Resolved 3D data preparation issues and added a script for rendering with blender.
+
 2023.10.28 Now support Llama-2; camera ready version updated
 
 2023.10.10 We released our preprocessed 3D-FRONT and 3D-FUTURE data (see [below](https://github.com/weixi-feng/LayoutGPT/tree/master#3d-scene-layouts)). Simplified the installation and preparation process. 
@@ -65,11 +67,16 @@ Our image layout benchmark NSR-1K and the 3D scene data split is provided under 
 NSR-1K contains ground truth image layouts for each prompt extracted from the MSCOCO dataset. The extracted clip image features are provided under  ```./dataset/NSR-1K/```. The json files contain ground truth layouts, captions and other metadata.
 
 ### 3D scene layouts
-For indoor scene synthesis, we are able to provide our [preprocessed dataset](https://drive.google.com/file/d/1NV3pmRpWcehPO5iKJPmShsRp_lNbxJuK/view?usp=sharing) after checking the licenses of [3D-FRONT](https://tianchi.aliyun.com/dataset/65347) and [3D-FUTURE](https://tianchi.aliyun.com/dataset/98063). Unzip the downloaded file to ```./ATISS/``` and you should have ```./ATISS/data_output``` and ```./ATISS/data_output_future```.
+Download [3D-FUTURE](https://tianchi.aliyun.com/dataset/98063) and our [preprocessed data](https://drive.google.com/file/d/1NV3pmRpWcehPO5iKJPmShsRp_lNbxJuK/view?usp=sharing) to ```./ATISS/```. Then unzip these files. 
+```
+cd ATISS
+unzip 3D-FUTURE-model.zip -d 3D-FUTURE
+unzip data_output.zip
+```
 
 <!-- you need to additionally prepare the [3D-FRONT](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-scene-dataset) and [3D-FUTURE](https://tianchi.aliyun.com/specials/promotion/alibaba-3d-future) datasets.  -->
 
-You may also refer to [ATISS](https://github.com/nv-tlabs/ATISS/tree/master#dataset) if you prefer to go through the preprocessing steps on your own.
+<!-- You may also refer to [ATISS](https://github.com/nv-tlabs/ATISS/tree/master#dataset) if you prefer to go through the preprocessing steps on your own. -->
 
 <!-- or follow the steps below:
 
@@ -123,23 +130,29 @@ To evaluate the out-of-bound rate (OOB) and KL divergence (KL-div.) of the gener
 ```
 python eval_scene_layout.py --dataset_dir ./ATISS/data_output --file ./llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --room bedroom
 ```
-### Visualization
-Following ATISS, you can visualize the generated layout by rendering the scene images using [simple-3dviz](https://simple-3dviz.com/)
+### Blender Visualization
+Run the following command to generte necessary files and have a low-quality visualization of the scene:
 ```
 cd ATISS/scripts
-python render_from_files.py ../config/bedrooms_eval_config.yaml visuslization_output_dir ../data_output_future ../demo/floor_plan_texture_images ../../llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --up_vector 0,1,0 --camera_position 2,2,2 --split test_regular --export_scene
+python render_from_files.py ../config/bedrooms_eval_config.yaml ../visuslization ../data_output_future/ ../demo/floor_plan_texture_images ../../llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --up_vector 0,1,0 --camera_position 2,2,2 --split test_regular --export_scene
 ```
-To render just the image of particular scene(s), add ```--scene_id id1 id2```. For all visualization shown in the preprint, we use [Blender](https://www.blender.org/) to manually render the scene images. With ```--export_scene```, you can find a folder under ```visuslization_output_dir```  for each scene, which contains ```*.obj``` and ```*.mtl``` files. You can import these files into Blender and render the scenes. While this can be done with Python, we do not have a script to achieve it yet.  
+With ```--export_scene```, object and material files for each scene will be saved to a folder in ```./ATISS/visualization/```. Then you can render a better looking image with [blender python API](https://docs.blender.org/api/current/index.html). 
+```
+pip install bpy==4.0.0
+# example
+python render_with_blender.py --input_dir ../visualization/test_Bedroom-803 --output_dir ../visualization/test_Bedroom-803.png --camera_position 0 0 5
+```
 
 
 ## Citation
 Please consider citing our work if you find it relevant or helpful:
 ```
-@article{feng2023layoutgpt,
-  title={LayoutGPT: Compositional Visual Planning and Generation with Large Language Models},
+@article{feng2024layoutgpt,
+  title={Layoutgpt: Compositional visual planning and generation with large language models},
   author={Feng, Weixi and Zhu, Wanrong and Fu, Tsu-jui and Jampani, Varun and Akula, Arjun and He, Xuehai and Basu, Sugato and Wang, Xin Eric and Wang, William Yang},
-  journal={arXiv preprint arXiv:2305.15393},
-  year={2023}
+  journal={Advances in Neural Information Processing Systems},
+  volume={36},
+  year={2024}
 }
 ```
 
