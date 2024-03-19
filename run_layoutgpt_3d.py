@@ -252,11 +252,11 @@ def form_prompt_for_chatgpt(text_input, top_k, stats, supporting_examples,
 
 
 def _main(args):
-    dataset_prefix = f"{args.dataset_dir}"
+    dataset_prefix = f"{args.dataset_dir}/{args.room}"
     with open(f"dataset/3D/{args.room}_splits.json", "r") as file:
         splits = json.load(file)
         
-    with open(f"{args.dataset_dir}/dataset_stats.txt", "r") as file:
+    with open(f"{dataset_prefix}/dataset_stats.txt", "r") as file:
         stats = json.load(file)
 
     if args.regular_floor_plan:
