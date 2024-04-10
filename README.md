@@ -40,7 +40,8 @@
 ## Installation & Dependencies
 LayoutGPT and the downstream generation requires different libraries. You can install everything all at once
 ```
-conda env create -f environment.yml
+conda create -n layoutgpt python=3.8 -y
+pip install -r requirements.txt
 ```
 and additionally
 ```
@@ -134,13 +135,12 @@ python eval_scene_layout.py --dataset_dir ./ATISS/data_output --file ./llm_outpu
 Run the following command to generte necessary files and have a low-quality visualization of the scene:
 ```
 cd ATISS/scripts
-python render_from_files.py ../config/bedrooms_eval_config.yaml ../visuslization ../data_output_future/ ../demo/floor_plan_texture_images ../../llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --up_vector 0,1,0 --camera_position 2,2,2 --split test_regular --export_scene
+python render_from_files.py ../config/bedrooms_eval_config.yaml ../visualization ../data_output_future/threed_future_model_bedroom.pkl ../demo/floor_plan_texture_images ../../llm_output/3D/gpt4.bedroom.k-similar.k_8.px_regular.json --without_screen --up_vector 0,1,0 --camera_position 2,2,2 --split test_regular --export_scene
 ```
-With ```--export_scene```, object and material files for each scene will be saved to a folder in ```./ATISS/visualization/```. Then you can render a better looking image with [blender python API](https://docs.blender.org/api/current/index.html). 
+With ```--export_scene```, object and material files for each scene will be saved to a folder in ```./ATISS/visualization/```. Make sure you download [Blender](https://download.blender.org/release/Blender3.5/) and can execute [from command line](https://docs.blender.org/manual/en/2.79/render/workflows/command_line.html) ([Linux](https://github.com/chenguolin/InstructScene/tree/main/blender)&Windows: extract .tar.xz/.zip, Mac: install .dmg and then make an alias).
 ```
-pip install bpy==4.0.0
 # example
-python render_with_blender.py --input_dir ../visualization/test_Bedroom-803 --output_dir ../visualization/test_Bedroom-803.png --camera_position 0 0 5
+blender -b -P render_with_blender.py -- --input_dir ../visualization/test_Bedroom-803 --output_dir ../visualization/test_Bedroom-803.png --camera_position 0 0 5
 ```
 
 

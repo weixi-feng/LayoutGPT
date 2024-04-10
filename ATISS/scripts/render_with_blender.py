@@ -1,5 +1,6 @@
 from glob import glob
 import pdb
+import sys
 import bpy
 import os
 import argparse
@@ -59,7 +60,8 @@ def setup_camera(position):
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()
+    argv = sys.argv[sys.argv.index("--") + 1 :]
+    args = parser.parse_args(argv)
 
     # Clear existing objects in the scene
     reset_scene()
