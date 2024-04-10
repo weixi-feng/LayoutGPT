@@ -243,7 +243,7 @@ def export_scene(output_directory, trimesh_meshes, names=None):
         with open(path_to_mtl_file, "wb") as f:
             f.write(
                 tex_out[mtl_key].replace(
-                    b"material0", mtl_names[i].encode("ascii")
+                    b"material_0", mtl_names[i].encode("ascii")
                 )
             )
         tex_key = next(k for k in tex_out.keys() if not k.endswith(".mtl"))

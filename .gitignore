@@ -168,7 +168,11 @@ dataset/NSR-1K/counting/*counting.reasoning*
 ATISS/data_output
 ATISS/data_output_future
 ATISS/3D-FUTURE
+ATISS/*.zip
 src/
 *.pth
 gligen/generation_samples
 eval_models/GLIP/outputs
+assets/*.pdf
+assets/*.pptx
+assets/blender
